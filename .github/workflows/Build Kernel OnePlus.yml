@@ -1,5 +1,10 @@
 name: Build All OnePlus Kernels
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/Build Kernel OnePlus.yml'
   workflow_dispatch:
     inputs:
       FILE:
@@ -186,7 +191,7 @@ on:
 
 jobs:
   build:
-    name: ${{ github.event.inputs.FAST_BUILD == 'true' && ' [FAST]' || '' }}${{ contains(github.event.inputs.FILE, '_aosp') && ' [AOSP]' || '' }}${{ github.event.inputs.KPM == 'KPM' && ' [KPM]' || github.event.inputs.KPM == 'KPN' && ' [KPN]' || '' }}${{ github.event.inputs.LSM_BBG == 'true' && ' [BBG]' || '' }}${{ github.event.inputs.SCHED_HMBIRD == 'true' && ' [HMBIRD]' || '' }}${{ github.event.inputs.DROID_SPACES == 'true' && ' [DS]' || '' }}${{ startsWith(github.event.inputs.ZRAM, '1/') && ' [ZRAM]' || '' }}${{ github.event.inputs.RE_KERNEL == 'true' && ' [REKER]' || '' }}For ${{ github.event.inputs.FILE }} ${{ github.event.inputs.SUFFIX }}
+    name: ${{ (github.event.inputs.FAST_BUILD || 'true') == 'true' && ' [FAST]' || '' }}${{ contains((github.event.inputs.FILE || 'oneplus_pad_2_pro_b'), '_aosp') && ' [AOSP]' || '' }}${{ (github.event.inputs.KPM || 'KPM') == 'KPM' && ' [KPM]' || (github.event.inputs.KPM || 'KPM') == 'KPN' && ' [KPN]' || '' }}${{ (github.event.inputs.LSM_BBG || 'true') == 'true' && ' [BBG]' || '' }}${{ (github.event.inputs.SCHED_HMBIRD || 'false') == 'true' && ' [HMBIRD]' || '' }}${{ (github.event.inputs.DROID_SPACES || 'false') == 'true' && ' [DS]' || '' }}${{ startsWith((github.event.inputs.ZRAM || '0/lz4kd/8589934592'), '1/') && ' [ZRAM]' || '' }}${{ (github.event.inputs.RE_KERNEL || 'false') == 'true' && ' [REKER]' || '' }}For ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }} ${{ github.event.inputs.SUFFIX }}
     runs-on: ubuntu-latest
     env:
       CCACHE_COMPILERCHECK: "none"
@@ -199,7 +204,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Maximize Build Space
-        if: ${{ github.event.inputs.SPACE_NOCLEAN == 'false' }}
+        if: ${{ (github.event.inputs.SPACE_NOCLEAN || 'false') == 'false' }}
         uses: easimon/maximize-build-space@master
         with:
           root-reserve-mb: 8192
@@ -212,7 +217,7 @@ jobs:
       - name: Extract Manifest Info
         id: extract_info
         env:
-          FILE: ${{ github.event.inputs.FILE }}
+          FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}
         run: |
           set -e
           cd "$GITHUB_WORKSPACE"
@@ -230,7 +235,7 @@ jobs:
           echo "FILE_BASE=$FILE_BASE" >> $GITHUB_ENV
 
           # 动态调用源码清单仓库，仓库优先级：1️⃣ OnePlusOSS → 2️⃣ Dynamic → 3️⃣ Appendix
-          DYNAMIC_REPO_INPUT="${{ github.event.inputs.DYNAMIC_REPO }}"
+          DYNAMIC_REPO_INPUT="${{ (github.event.inputs.DYNAMIC_REPO || 'Numbersf') }}"
           declare -A REPOS
           REPOS["OnePlusOSS"]="OnePlusOSS|kernel_manifest"
           REPOS["Dynamic"]="${DYNAMIC_REPO_INPUT}|kernel_manifest"
@@ -327,27 +332,27 @@ jobs:
           echo "Selected CPUD: ${{ env.CPUD }}"
           echo "Selected ANDROID_VERSION: ${{ env.ANDROID_VERSION }}"
           echo "Selected BUILD_METHOD: ${{ env.BUILD_METHOD }}"
-          echo "Selected FILE: ${{ github.event.inputs.FILE }}"
-          echo "Selected MANAGER_SOURCE: ${{ github.event.inputs.MANAGER_SOURCE }}"
-          echo "Selected SUSFS_CI: ${{ github.event.inputs.SUSFS_CI }}"
-          if [ "${{ github.event.inputs.SUSFS_CI }}" != "N/A" ]; then
+          echo "Selected FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}"
+          echo "Selected MANAGER_SOURCE: ${{ (github.event.inputs.MANAGER_SOURCE || 'MIUIX') }}"
+          echo "Selected SUSFS_CI: ${{ (github.event.inputs.SUSFS_CI || 'N/A') }}"
+          if [ "${{ (github.event.inputs.SUSFS_CI || 'N/A') }}" != "N/A" ]; then
             echo "::warning title=SUSFS Not Required::当前管理器已自带附加模块，无需启用 SUSFS 模块，强制启用可能导致不开机。"
           fi
-          echo "Selected KPM: ${{ github.event.inputs.KPM }}"
+          echo "Selected KPM: ${{ (github.event.inputs.KPM || 'KPM') }}"
           echo "Custom SUSFS_META: ${{ github.event.inputs.SUSFS_META }}"
-          echo "Custom KSU_META: ${{ github.event.inputs.KSU_META }}"
-          echo "Selected ZRAM: ${{ github.event.inputs.ZRAM }}"
-          echo "Selected LSM_BBG: ${{ github.event.inputs.LSM_BBG }}"
-          echo "Selected NETFILTER: ${{ github.event.inputs.NETFILTER }}"
-          echo "Selected CCM: ${{ github.event.inputs.CCM }}"
-          echo "Selected SUSFS_DEV: ${{ github.event.inputs.SUSFS_DEV }}"
-          echo "Selected FAST_BUILD: ${{ github.event.inputs.FAST_BUILD }}"
-          echo "Selected SCHED_HMBIRD: ${{ github.event.inputs.SCHED_HMBIRD }}"
-          echo "Selected UNICODE_BYPASS: ${{ github.event.inputs.UNICODE_BYPASS }}"
-          echo "Selected DROID_SPACES: ${{ github.event.inputs.DROID_SPACES }}"
-          echo "Selected RE_KERNEL: ${{ github.event.inputs.RE_KERNEL }}"
+          echo "Custom KSU_META: ${{ (github.event.inputs.KSU_META || 'builtin/Numbersf/') }}"
+          echo "Selected ZRAM: ${{ (github.event.inputs.ZRAM || '0/lz4kd/8589934592') }}"
+          echo "Selected LSM_BBG: ${{ (github.event.inputs.LSM_BBG || 'true') }}"
+          echo "Selected NETFILTER: ${{ (github.event.inputs.NETFILTER || 'true') }}"
+          echo "Selected CCM: ${{ (github.event.inputs.CCM || 'true') }}"
+          echo "Selected SUSFS_DEV: ${{ (github.event.inputs.SUSFS_DEV || 'false') }}"
+          echo "Selected FAST_BUILD: ${{ (github.event.inputs.FAST_BUILD || 'true') }}"
+          echo "Selected SCHED_HMBIRD: ${{ (github.event.inputs.SCHED_HMBIRD || 'false') }}"
+          echo "Selected UNICODE_BYPASS: ${{ (github.event.inputs.UNICODE_BYPASS || 'false') }}"
+          echo "Selected DROID_SPACES: ${{ (github.event.inputs.DROID_SPACES || 'false') }}"
+          echo "Selected RE_KERNEL: ${{ (github.event.inputs.RE_KERNEL || 'false') }}"
 
-          BUILD_TIME="${{ github.event.inputs.BUILD_TIME }}"
+          BUILD_TIME="${{ (github.event.inputs.BUILD_TIME || 'Fri Dec 12 11:37:03 UTC 2025') }}"
           SUFFIX="${{ github.event.inputs.SUFFIX }}"
 
           # BUILD_TIME
@@ -421,11 +426,11 @@ jobs:
           free -h
 
       - name: Set Cache Environment
-        if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' }}
+        if: ${{ (github.event.inputs.BUILD_NOCCACHE || 'false') == 'false' }}
         run: |
-          echo "CCACHE_DIR=$HOME/.ccache_${{ github.event.inputs.FILE }}" >> $GITHUB_ENV
-          mkdir -p "$HOME/.ccache_${{ github.event.inputs.FILE }}"
-          echo "set: $HOME/.ccache_${{ github.event.inputs.FILE }}"
+          echo "CCACHE_DIR=$HOME/.ccache_${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}" >> $GITHUB_ENV
+          mkdir -p "$HOME/.ccache_${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}"
+          echo "set: $HOME/.ccache_${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}"
 
       - name: Configure Git
         run: |
@@ -488,21 +493,21 @@ jobs:
          sudo cp -f "$LIB_DIR/ccache" /usr/bin/ccache && sudo chmod +x /usr/bin/ccache
 
       - name: Restore Ccache
-        if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' }}
+        if: ${{ (github.event.inputs.BUILD_NOCCACHE || 'false') == 'false' }}
         uses: actions/cache@v5
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ github.ref_name }}-${{ github.event.inputs.FILE }}-${{ env.BUILD_METHOD }}-${{ github.event.inputs.FAST_BUILD == 'true' && 'alpha' || 'beta' }}-16.8
+          key: ccache-${{ runner.os }}-${{ github.ref_name }}-${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}-${{ env.BUILD_METHOD }}-${{ (github.event.inputs.FAST_BUILD || 'true') == 'true' && 'alpha' || 'beta' }}-16.8
 
       - name: Restore ThinLTO Cache
-        if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' && github.event.inputs.FAST_BUILD == 'true' }}
+        if: ${{ (github.event.inputs.BUILD_NOCCACHE || 'false') == 'false' && (github.event.inputs.FAST_BUILD || 'true') == 'true' }}
         uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/kernel_workspace/.thinlto-cache
-          key: thinlto-${{ runner.os }}-${{ github.ref_name }}-${{ github.event.inputs.FILE }}-16.8
+          key: thinlto-${{ runner.os }}-${{ github.ref_name }}-${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}-16.8
 
       - name: Initialize Ccache
-        if: ${{ github.event.inputs.BUILD_NOCCACHE == 'false' }}
+        if: ${{ (github.event.inputs.BUILD_NOCCACHE || 'false') == 'false' }}
         run: |
           INIT_FLAG="${{ env.CCACHE_DIR }}/.ccache_initialized"
           if command -v ccache >/dev/null 2>&1; then
@@ -528,7 +533,7 @@ jobs:
 
       - name: Initialize Repo and Sync
         env:
-          FILE: ${{ github.event.inputs.FILE }}
+          FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}
         run: |
           cd kernel_workspace
           mkdir -p .repo/manifests
@@ -632,7 +637,7 @@ jobs:
           cd kernel_workspace
           SUFFIX="${{ github.event.inputs.SUFFIX }}"
           KANDROID_VERSION="${{ env.KANDROID_VERSION }}"
-          FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
+          FAST_BUILD="${{ (github.event.inputs.FAST_BUILD || 'true') }}"
 
           for path in \
             kernel_platform/common/scripts/setlocalversion \
@@ -678,7 +683,7 @@ jobs:
         run: |
           cd kernel_workspace
           KANDROID_VERSION="${{ env.KANDROID_VERSION }}"
-          FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
+          FAST_BUILD="${{ (github.event.inputs.FAST_BUILD || 'true') }}"
 
           # 生成随机数字和随机hash
           RANDOM_DIGIT=$(od -An -N1 -tu1 < /dev/urandom | tr -d '[:space:]' | awk '{print $1 % 11}')
@@ -722,7 +727,7 @@ jobs:
       - name: Resolve Manager Source
         id: manager
         run: |
-          MANAGER_SOURCE="${{ github.event.inputs.MANAGER_SOURCE }}"
+          MANAGER_SOURCE="${{ (github.event.inputs.MANAGER_SOURCE || 'MIUIX') }}"
 
           case "$MANAGER_SOURCE" in
             MD3)
@@ -750,7 +755,7 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           MANAGER_BRANCH="${{ steps.manager.outputs.manager_branch }}"
-          KSU_META="${{ github.event.inputs.KSU_META }}"
+          KSU_META="${{ (github.event.inputs.KSU_META || 'builtin/Numbersf/') }}"
 
           # 必须包含两个分隔符（至少三个字段）
           if [[ "$(grep -o '/' <<< "$KSU_META" | wc -l)" -lt 2 ]]; then
@@ -828,7 +833,7 @@ jobs:
 
       - name: Apply Patches SukiSU Ultra
         env:
-          FILE: ${{ github.event.inputs.FILE }}
+          FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}
         run: |
           cd kernel_workspace
           if [ "${{ github.event.inputs.SUSFS_META }}" != "-1" ]; then
@@ -846,10 +851,10 @@ jobs:
             fi
             cd ..
           fi
-          if [ "${{ github.event.inputs.RE_KERNEL }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.RE_KERNEL || 'false') }}" = "true" ]; then
             git clone https://github.com/Sakion-Team/Re-Kernel.git
           fi
-          if [ "${{ github.event.inputs.LZ4_UPDATE }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.LZ4_UPDATE || 'false') }}" = "true" ]; then
             git clone https://github.com/lz4/lz4.git
           fi
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
@@ -861,7 +866,7 @@ jobs:
             cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
           fi
 
-          if [[ "${{ github.event.inputs.ZRAM }}" == 1* ]]; then
+          if [[ "${{ (github.event.inputs.ZRAM || '0/lz4kd/8589934592') }}" == 1* ]]; then
             echo "正在拉取zram补丁"
             cp -r ../SukiSU_patch/other/zram/lz4k/include/linux/* ./common/include/linux/
             cp -r ../SukiSU_patch/other/zram/lz4k/lib/* ./common/lib/
@@ -946,7 +951,7 @@ jobs:
 
       # OGKI转换GKI，无需修改 dtbo 开机
       - name: Apply Convert HMBIRD_OGKI to HMBIRD_GKI
-        if: ${{ fromJSON(env.KV1) >= 6 && fromJSON(env.KV2) >= 66 && github.event.inputs.SCHED_HMBIRD == 'false' }}
+        if: ${{ fromJSON(env.KV1) >= 6 && fromJSON(env.KV2) >= 66 && (github.event.inputs.SCHED_HMBIRD || 'false') == 'false' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -964,7 +969,7 @@ jobs:
           check_rejects .
 
       - name: Apply UNICODE_BYPASS
-        if: ${{ github.event.inputs.UNICODE_BYPASS == 'true' }}
+        if: ${{ (github.event.inputs.UNICODE_BYPASS || 'false') == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -977,7 +982,7 @@ jobs:
           check_rejects .
 
       - name: Apply RE_KERNEL
-        if: ${{ github.event.inputs.RE_KERNEL == 'true' }}
+        if: ${{ (github.event.inputs.RE_KERNEL || 'false') == 'true' }}
         run: |
           RE_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Re-Kernel/LKM-Source"
           cd kernel_workspace/kernel_platform/common
@@ -989,8 +994,8 @@ jobs:
 
       - name: Apply DROID_SPACES
         env:
-          FILE: ${{ github.event.inputs.FILE }}
-        if: ${{ github.event.inputs.DROID_SPACES == 'true' }}
+          FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}
+        if: ${{ (github.event.inputs.DROID_SPACES || 'false') == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -1038,7 +1043,7 @@ jobs:
           check_rejects .
 
       - name: Apply LZ4_DEV
-        if: ${{ github.event.inputs.LZ4_UPDATE == 'true' }}
+        if: ${{ (github.event.inputs.LZ4_UPDATE || 'false') == 'true' }}
         run: |
           set -euo pipefail
           LZ4_DIR="${GITHUB_WORKSPACE}/kernel_workspace/lz4/lib"
@@ -1140,9 +1145,9 @@ jobs:
           echo "::endgroup::"
 
       - name: Apply ZRAM
-        if: startsWith(github.event.inputs.ZRAM, '1/')
+        if: startsWith((github.event.inputs.ZRAM || '0/lz4kd/8589934592'), '1/')
         run: |
-          ZRAM="${{ github.event.inputs.ZRAM }}"
+          ZRAM="${{ (github.event.inputs.ZRAM || '0/lz4kd/8589934592') }}"
           if [[ "$(grep -o '/' <<< "$ZRAM" | wc -l)" -lt 2 ]]; then
             echo "错误: ZRAM 参数缺少必要的分隔符 '/'，格式应为: 总开关0关1开/算法名(前面输入0时无效)/大小(前面输入0时无效)"
             exit 10
@@ -1166,8 +1171,8 @@ jobs:
 
       - name: Apply SCHED_HMBIRD
         env:
-          FILE: ${{ github.event.inputs.FILE }}
-        if: ${{ github.event.inputs.SCHED_HMBIRD == 'true' }}
+          FILE: ${{ (github.event.inputs.FILE || 'oneplus_pad_2_pro_b') }}
+        if: ${{ (github.event.inputs.SCHED_HMBIRD || 'false') == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
           CLEAN_FILE="${FILE//_bak/}"
@@ -1193,7 +1198,7 @@ jobs:
           fi
 
       - name: Apply LSM_BBG
-        if: ${{ github.event.inputs.LSM_BBG == 'true' }}
+        if: ${{ (github.event.inputs.LSM_BBG || 'true') == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
           echo "正在启用内核级基带保护支持…"
@@ -1211,10 +1216,10 @@ jobs:
           echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
 
           # KPM配置
-          if [ "${{ github.event.inputs.KPM }}" = "KPM" ] || [ "${{ github.event.inputs.KPM }}" = "N/A" ]; then
+          if [ "${{ (github.event.inputs.KPM || 'KPM') }}" = "KPM" ] || [ "${{ (github.event.inputs.KPM || 'KPM') }}" = "N/A" ]; then
             echo "CONFIG_KPM=y" >> "$CONFIG_FILE"
           fi
-          if [ "${{ github.event.inputs.KPM }}" = "KPN" ]; then
+          if [ "${{ (github.event.inputs.KPM || 'KPM') }}" = "KPN" ]; then
             echo "CONFIG_KPM=n" >> "$CONFIG_FILE"
           fi
 
@@ -1239,7 +1244,7 @@ jobs:
           echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
 
           # BBR & ECN配置*
-          if [ "${{ github.event.inputs.CCM }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.CCM || 'true') }}" = "true" ]; then
             echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
             echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
             echo "CONFIG_NET_SCH_FQ=y" >> "$CONFIG_FILE"
@@ -1253,13 +1258,13 @@ jobs:
           fi
 
           # Re-Kernel配置*
-          if [ "${{ github.event.inputs.RE_KERNEL }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.RE_KERNEL || 'false') }}" = "true" ]; then
             echo "CONFIG_REKERNEL=y" >> "$CONFIG_FILE"
             echo "CONFIG_REKERNEL_NETWORK=y" >> "$CONFIG_FILE"
           fi
 
           # ZRAM配置*
-          if [[ "${{ github.event.inputs.ZRAM }}" == 1* ]]; then
+          if [[ "${{ (github.event.inputs.ZRAM || '0/lz4kd/8589934592') }}" == 1* ]]; then
             echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
             echo "CONFIG_CRYPTO_LZ4K=y" >> "$CONFIG_FILE"
             echo "CONFIG_CRYPTO_LZ4KD=y" >> "$CONFIG_FILE"
@@ -1269,12 +1274,12 @@ jobs:
           fi
 
           # LSM配置*
-          if [ "${{ github.event.inputs.LSM_BBG }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.LSM_BBG || 'true') }}" = "true" ]; then
             echo "CONFIG_BBG=y" >> "$CONFIG_FILE"
           fi
 
           # DROID_SPACES配置*
-          if [ "${{ github.event.inputs.DROID_SPACES }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.DROID_SPACES || 'false') }}" = "true" ]; then
             echo "CONFIG_NTSYNC=y" >> "$CONFIG_FILE"
             echo "CONFIG_SYSVIPC=y" >> "$CONFIG_FILE"
             echo "CONFIG_DEVTMPFS=y" >> "$CONFIG_FILE"
@@ -1288,7 +1293,7 @@ jobs:
           fi
 
           # IPSET & IPv6_NAT配置*
-          if [ "${{ github.event.inputs.NETFILTER }}" = "true" ]; then
+          if [ "${{ (github.event.inputs.NETFILTER || 'true') }}" = "true" ]; then
             if [[ "$KERNEL_VERSION" != "6.12" && "${CPU}" != mt* ]]; then
               echo "CONFIG_BPF_STREAM_PARSER=y" >> "$CONFIG_FILE"
             fi
@@ -1329,7 +1334,7 @@ jobs:
           sed -i 's/check_defconfig//' ./build.config.gki
 
       - name: Fix IPv6_NAT Error
-        if: ${{ github.event.inputs.NETFILTER == 'true' }}
+        if: ${{ (github.event.inputs.NETFILTER || 'true') == 'true' }}
         run: |
           PATCH_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches"
           cd kernel_workspace/kernel_platform/common
@@ -1342,10 +1347,10 @@ jobs:
 
       # Custom kernel build time, without adding #1 SMP PREEMPT 自定义内核构建时间，不要加入#1 SMP PREEMPT
       - name: Custom BUILD_TIME
-        if: ${{ github.event.inputs.BUILD_TIME != '-1' }}
+        if: ${{ (github.event.inputs.BUILD_TIME || 'Fri Dec 12 11:37:03 UTC 2025') != '-1' }}
         shell: bash
         run: |
-          INPUT_TIME="${{ github.event.inputs.BUILD_TIME }}"
+          INPUT_TIME="${{ (github.event.inputs.BUILD_TIME || 'Fri Dec 12 11:37:03 UTC 2025') }}"
           if [[ -n "$INPUT_TIME" && "$INPUT_TIME" != "F" ]]; then
             DATESTR="$INPUT_TIME"
             echo "Using input BUILD_TIME: $DATESTR"
@@ -1374,7 +1379,7 @@ jobs:
           sed -i '/obj-y.*gpueb/d' kernel_workspace/kernel-5.10/drivers/gpu/mediatek/Makefile
 
       - name: Build Kernel FAST
-        if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
+        if: ${{ (github.event.inputs.FAST_BUILD || 'true') == 'true' }}
         id: fast_build
         run: |
           KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
@@ -1566,7 +1571,7 @@ jobs:
           ccache -s
 
       - name: Fallback to Build Kernel
-        if: ${{ github.event.inputs.FAST_BUILD == 'false' || steps.fast_build.outputs.fallback == 'true' }}
+        if: ${{ (github.event.inputs.FAST_BUILD || 'true') == 'false' || steps.fast_build.outputs.fallback == 'true' }}
         run: |
           cd kernel_workspace
           if [ -f ./kernel_platform/build_with_bazel.py ]; then
@@ -1606,14 +1611,14 @@ jobs:
           fi
 
       - name: Apply KPX and Replace Image
-        if: ${{ github.event.inputs.KPM != 'N/A' }}
+        if: ${{ (github.event.inputs.KPM || 'KPM') != 'N/A' }}
         run: |
           KPM_DIR="${GITHUB_WORKSPACE}/kernel_workspace/SukiSU_patch/kpm"
           # KPM_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches/kpm"
           KPN_DIR="${GITHUB_WORKSPACE}/kernel_workspace/Action-Build/patches/kpn"
           OUT_DIR="${GITHUB_WORKSPACE}/kernel_workspace/kernel_platform/out/Final-Image-Find"
           cd "${OUT_DIR}"
-          if [ "${{ github.event.inputs.KPM }}" = "KPM" ]; then
+          if [ "${{ (github.event.inputs.KPM || 'KPM') }}" = "KPM" ]; then
             cp "${KPM_DIR}/patch_linux" .
             chmod +x patch_linux
             ./patch_linux
@@ -1626,7 +1631,7 @@ jobs:
           cp Image "${GITHUB_WORKSPACE}/AnyKernel3/Image"
 
       - name: Download Latest SUSFS Module from CI
-        if: ${{ github.event.inputs.SUSFS_CI == 'CI' && github.event.inputs.SUSFS_META != '-1' }}
+        if: ${{ (github.event.inputs.SUSFS_CI || 'N/A') == 'CI' && github.event.inputs.SUSFS_META != '-1' }}
         continue-on-error: true
         run: |
           LATEST_RUN_ID=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
@@ -1646,7 +1651,7 @@ jobs:
           fi
 
       - name: Download Latest SUSFS Module from Release
-        if: ${{ github.event.inputs.SUSFS_CI == 'Release' && github.event.inputs.SUSFS_META != '-1' }}
+        if: ${{ (github.event.inputs.SUSFS_CI || 'N/A') == 'Release' && github.event.inputs.SUSFS_META != '-1' }}
         continue-on-error: true
         run: |
           wget -O ksu_module_susfs_1.5.2+_Release.zip https://github.com/sidex15/ksu_module_susfs/releases/latest/download/ksu_module_susfs_1.5.2+.zip
@@ -1682,7 +1687,7 @@ jobs:
       - name: Set zip Suffix
         id: suffix
         run: |
-          echo "value=${{ env.ZRAM_ALGO_U && format('_{0}', env.ZRAM_ALGO_U) || '' }}${{ github.event.inputs.KPM == 'KPM' && '_KPM' || github.event.inputs.KPM == 'KPN' && '_KPN' || '' }}${{ github.event.inputs.LSM_BBG == 'true' && '_BBG' || '' }}_ILH${{ github.event.inputs.SCHED_HMBIRD== 'true' && '_HMBIRD' || '' }}${{ github.event.inputs.DROID_SPACES== 'true' && '_DS' || '' }}${{ github.event.inputs.RE_KERNEL == 'true' && '_REKER' || '' }}" >> $GITHUB_OUTPUT
+          echo "value=${{ env.ZRAM_ALGO_U && format('_{0}', env.ZRAM_ALGO_U) || '' }}${{ (github.event.inputs.KPM || 'KPM') == 'KPM' && '_KPM' || (github.event.inputs.KPM || 'KPM') == 'KPN' && '_KPN' || '' }}${{ (github.event.inputs.LSM_BBG || 'true') == 'true' && '_BBG' || '' }}_ILH${{ (github.event.inputs.SCHED_HMBIRD || 'false')== 'true' && '_HMBIRD' || '' }}${{ (github.event.inputs.DROID_SPACES || 'false')== 'true' && '_DS' || '' }}${{ (github.event.inputs.RE_KERNEL || 'false') == 'true' && '_REKER' || '' }}" >> $GITHUB_OUTPUT
 
       - name: Upload AnyKernel3
         uses: actions/upload-artifact@v7
@@ -1691,7 +1696,7 @@ jobs:
           path: ./AnyKernel3/*
 
       - name: Extract and Process ZRAM Module
-        if: startsWith(github.event.inputs.ZRAM, '1/')
+        if: startsWith((github.event.inputs.ZRAM || '0/lz4kd/8589934592'), '1/')
         id: zram_find
         run: |
           set -e
@@ -1744,7 +1749,7 @@ jobs:
           fi
 
       - name: Upload ZRAM Module
-        if: startsWith(github.event.inputs.ZRAM, '1/') && steps.zram_find.outputs.upload != 'false'
+        if: startsWith((github.event.inputs.ZRAM || '0/lz4kd/8589934592'), '1/') && steps.zram_find.outputs.upload != 'false'
         uses: actions/upload-artifact@v7
         with:
           name: ZRAM-Module_${{ env.KERNEL_VERSION }}_${{ steps.extract_info.outputs.value }}
