@@ -843,6 +843,46 @@ jobs:
                   print("Patched SukiSU USER_ARG_NULL to pointer form")
               else:
                   print("SukiSU USER_ARG_NULL pointer patch not needed")
+
+          ksud = Path("kernel/runtime/ksud.c")
+          old_block = """#if defined(CONFIG_KSU_SUSFS) && defined(KSU_COMPAT_USE_STATIC_KEY)
+          extern struct static_key_false ksu_init_rc_hook_key_false;
+          extern struct static_key_false ksu_input_hook_key_false;
+          #else
+          bool ksu_vfs_read_hook __read_mostly = true;
+          bool ksu_execveat_hook __read_mostly = true;
+          bool ksu_input_hook __read_mostly = true;
+          #endif"""
+          new_block = """#if defined(CONFIG_KSU_SUSFS) && defined(KSU_COMPAT_USE_STATIC_KEY)
+          DEFINE_STATIC_KEY_TRUE(ksu_is_init_rc_hook_enabled);
+          DEFINE_STATIC_KEY_TRUE(ksu_is_input_hook_enabled);
+          #else
+          bool ksu_vfs_read_hook __read_mostly = true;
+          bool ksu_execveat_hook __read_mostly = true;
+          bool ksu_input_hook __read_mostly = true;
+          #endif"""
+
+          if not ksud.exists():
+              print("SukiSU hook static-key patch skipped: kernel/runtime/ksud.c not found")
+          else:
+              s = ksud.read_text()
+              patched = False
+              if old_block in s:
+                  s = s.replace(old_block, new_block, 1)
+                  patched = True
+              replacements = {
+                  "ksu_init_rc_hook_key_false": "ksu_is_init_rc_hook_enabled",
+                  "ksu_input_hook_key_false": "ksu_is_input_hook_enabled",
+              }
+              for old_name, new_name in replacements.items():
+                  if old_name in s:
+                      s = s.replace(old_name, new_name)
+                      patched = True
+              if patched:
+                  ksud.write_text(s)
+                  print("Patched SukiSU SUSFS static-key hook names")
+              else:
+                  print("SukiSU SUSFS static-key hook patch not needed")
           PY
 
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
