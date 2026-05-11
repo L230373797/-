@@ -827,6 +827,24 @@ jobs:
           KSU_VERSION=$(expr $(git rev-list --count "$MANAGER_BRANCH" 2>/dev/null || echo 13000) + 37185)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
 
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("kernel/sulog/event.c")
+          old = "#define USER_ARG_NULL ((struct user_arg_ptr){ 0 })"
+          new = "#define USER_ARG_NULL (&(struct user_arg_ptr){ 0 })"
+
+          if not p.exists():
+              print("SukiSU sulog pointer patch skipped: kernel/sulog/event.c not found")
+          else:
+              s = p.read_text()
+              if old in s:
+                  p.write_text(s.replace(old, new, 1))
+                  print("Patched SukiSU USER_ARG_NULL to pointer form")
+              else:
+                  print("SukiSU USER_ARG_NULL pointer patch not needed")
+          PY
+
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
           grep -nE '^(REPO_OWNER|REPO_NAME|REPO_BRANCH|KSU_VERSION_API|KSU_VERSION_FULL|VERSION_TAG|GIT_BIN|CURL_BIN)' kernel/Makefile
           echo "::endgroup::"
